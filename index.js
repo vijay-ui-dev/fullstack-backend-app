@@ -3,12 +3,16 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
+
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MONGO_URI = "mongodb+srv://yvijayspartan_db_user:7L1XwFzG50K7JtBy@cluster0.gxxhdph.mongodb.net/myapp?appName=Cluster0";
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
+const PORT = process.env.PORT || 3000;
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB connected successfully!"))
@@ -131,7 +135,7 @@ app.post("/login", async (req, res) => {
     }
     const token = jwt.sign(
       { userId: user._id, email: user.email },   // payload — token ke andar kya store hoga
-      "mySecretKey123",                            // secret key — isse token sign hota hai
+      JWT_SECRET,                            // secret key — isse token sign hota hai
       { expiresIn: "1h" }                          // token 1 ghante mein expire ho jayega
     );
 
@@ -157,7 +161,7 @@ function verifyToken(req, res, next) {
 
   const token = authHeader.split(" ")[1];   // "Bearer <token>" mein se sirf token nikalo
 
-  jwt.verify(token, "mySecretKey123", (err, decoded) => {
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
       return res.status(403).json({ error: "Invalid or expired token" });
     }
@@ -171,18 +175,22 @@ app.get("/profile", verifyToken, (req, res) => {
   res.json({ message: "This is protected data", user: req.user });
 });
 
-async function testBcrypt() {
-  const hashed = await bcrypt.hash("1234", 10);
-  console.log("Hashed password:", hashed);
+// async function testBcrypt() {
+//   const hashed = await bcrypt.hash("1234", 10);
+//   console.log("Hashed password:", hashed);
 
-  const isMatch = await bcrypt.compare("1234", hashed);
-  console.log("Correct password match:", isMatch);
+//   const isMatch = await bcrypt.compare("1234", hashed);
+//   console.log("Correct password match:", isMatch);
 
-  const isWrongMatch = await bcrypt.compare("wrongpassword", hashed);
-  console.log("Wrong password match:", isWrongMatch);
-}
-testBcrypt();
+//   const isWrongMatch = await bcrypt.compare("wrongpassword", hashed);
+//   console.log("Wrong password match:", isWrongMatch);
+// }
+// testBcrypt();
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+// app.listen(3000, () => {
+//   console.log("Server is running on port 3000");
+// });
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
