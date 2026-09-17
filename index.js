@@ -13,6 +13,7 @@ app.use(express.json());
 const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
 const PORT = process.env.PORT || 3000;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB connected successfully!"))
@@ -152,6 +153,36 @@ app.post("/login", async (req, res) => {
 });
 
 // after login profile route
+
+// Ask ai route
+app.post("/ask-ai", async (req, res) => {
+  try {
+    const userQuestion = req.body.question;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: userQuestion }]
+            }
+          ]
+        })
+      }
+    );
+
+    const data = await response.json();
+    const aiAnswer = data.candidates[0].content.parts[0].text;
+
+    res.json({ answer: aiAnswer });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Middleware — token verify karne ke liye
 function verifyToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -191,6 +222,7 @@ app.get("/profile", verifyToken, (req, res) => {
 //   console.log("Server is running on port 3000");
 // });
 
+console.log("Gemini Key:", GEMINI_API_KEY);
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
