@@ -165,19 +165,15 @@ app.post("/ask-ai", async (req, res) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: userQuestion }]
-            }
-          ]
+          contents: [{ parts: [{ text: userQuestion }] }]
         })
       }
     );
 
     const data = await response.json();
-    const aiAnswer = data.candidates[0].content.parts[0].text;
+    console.log("Full Gemini response:", JSON.stringify(data));   // NAYA — poora response console mein
 
-    res.json({ answer: aiAnswer });
+    res.json(data);   // temporarily poora data hi bhej do, debug ke liye
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
