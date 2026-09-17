@@ -14,6 +14,7 @@ const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
 const PORT = process.env.PORT || 3000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB connected successfully!"))
@@ -159,21 +160,23 @@ app.post("/ask-ai", async (req, res) => {
   try {
     const userQuestion = req.body.question;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: userQuestion }] }]
-        })
-      }
-    );
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-oss-120b",
+        messages: [{ role: "user", content: userQuestion }]
+      })
+    });
 
     const data = await response.json();
-    console.log("Full Gemini response:", JSON.stringify(data));   // NAYA — poora response console mein
+    console.log("Full Groq response:", JSON.stringify(data));   // ✅ NAYA — print karo
 
-    res.json(data);   // temporarily poora data hi bhej do, debug ke liye
+    res.json(data);   // ✅ TEMPORARILY — poora data bhejो, .choices[0] hataओ
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -219,6 +222,7 @@ app.get("/profile", verifyToken, (req, res) => {
 // });
 
 console.log("Gemini Key:", GEMINI_API_KEY);
+console.log("Groq Key:", GROQ_API_KEY);
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
